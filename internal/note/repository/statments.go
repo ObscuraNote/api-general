@@ -8,23 +8,23 @@ type statementsItem struct {
 	statement *sqlx.Stmt
 }
 
-type statments struct {
+type statements struct {
 	addNote        statementsItem
 	getNotesByUser statementsItem
 }
 
-var statementsList = statments{
+var statementsList = statements{
 	addNote: statementsItem{
 		name: "addNote",
 		query: `
-			INSERT INTO user_data (user_address, key, encrypted_data, iv)
+			INSERT INTO keys (user_address, key, encrypted_data, iv)
         VALUES ($1, $2, $3, $4);`,
 	},
 	getNotesByUser: statementsItem{
 		name: "getNotesByUser",
 		query: `
       SELECT key, encrypted_data, iv
-      FROM user_data
+      FROM keys
       WHERE user_address = $1;`,
 	},
 }

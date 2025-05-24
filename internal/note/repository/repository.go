@@ -2,22 +2,15 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"log"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/philippe-berto/database/postgresdb"
 )
 
 type (
-	Statementer interface {
-		ExecContext(ctx context.Context, args ...any) (sql.Result, error)
-		QueryContext(ctx context.Context, args ...any) (*sql.Rows, error)
-	}
-
 	Repository struct {
-		db        *postgresdb.Client
-		statments map[string]*sqlx.Stmt
+		db         *postgresdb.Client
+		statements statements
 	}
 	keyImput struct {
 		UserAddress   string
@@ -35,18 +28,21 @@ type (
 
 func New(db *postgresdb.Client) *Repository {
 	r := &Repository{
-		db:        db,
-		statments: map[string]*sqlx.Stmt{},
+		db:         db,
+		statements: statements{},
 	}
-	if err := r.prepareStatements(); err != nil {
+	statements, err := r.prepareStatements()
+	if err != nil {
 		panic(err)
 	}
+
+	r.statements = statements
 
 	return r
 }
 
-func (r *Repository) AddKey(ctx context.Context, note *keyImput) error {
-	_, err := statementsList.addNote.statement.
+func (r *Repository) AddKey(ctx context.Context, note keyImput) error {
+	_, err := r.statements.addNote.statement.
 		ExecContext(ctx, note.UserAddress, note.Key, note.EncryptedData, note.IV)
 	if err != nil {
 		log.Println("Error adding note")
@@ -58,7 +54,7 @@ func (r *Repository) AddKey(ctx context.Context, note *keyImput) error {
 }
 
 func (r *Repository) GetKeysByUser(ctx context.Context, userAddress string) ([]keyOutput, error) {
-	rows, err := statementsList.getNotesByUser.statement.
+	rows, err := r.statements.getNotesByUser.statement.
 		QueryContext(ctx, userAddress)
 	if err != nil {
 		log.Println("Error getting notes by user")
@@ -81,18 +77,18 @@ func (r *Repository) GetKeysByUser(ctx context.Context, userAddress string) ([]k
 	return notes, nil
 }
 
-func (r *Repository) prepareStatements() error {
+func (r *Repository) prepareStatements() (statements, error) {
 	var err error
 
 	statementsList.addNote.statement, err = r.db.PrepareStatement(statementsList.addNote.query)
 	if err != nil {
-		return err
+		return statements{}, err
 	}
 
 	statementsList.getNotesByUser.statement, err = r.db.PrepareStatement(statementsList.getNotesByUser.query)
 	if err != nil {
-		return err
+		return statements{}, err
 	}
 
-	return nil
+	return statementsList, nil
 }
