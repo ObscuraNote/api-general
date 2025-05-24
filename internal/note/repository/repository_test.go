@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/philippe-berto/database/postgresdb"
+	"github.com/stretchr/testify/assert"
 )
 
 var ctx = context.Background()
@@ -24,6 +25,7 @@ func TestRepository(t *testing.T) {
 		t.Fatalf("failed to connect to database: %v", err)
 	}
 
+	db.GetClient().Exec("TRUNCATE TABLE keys;")
 	defer db.Close()
 	defer db.GetClient().Exec("TRUNCATE TABLE keys;")
 
@@ -37,29 +39,45 @@ func TestRepository(t *testing.T) {
 			IV:            []byte("iv"),
 		}
 		err := repo.AddKey(ctx, note)
-		if err != nil {
-			t.Errorf("expected no error, got %v", err)
-		}
+		assert.NoError(t, err)
 	})
+
 	t.Run("GetKeysByUser", func(t *testing.T) {
 		userAddress := "user1"
 		keys, err := repo.GetKeysByUser(ctx, userAddress)
-		if err != nil {
-			t.Errorf("expected no error, got %v", err)
-		}
-		if len(keys) == 0 {
-			t.Errorf("expected keys, got empty slice")
-		}
+		assert.NoError(t, err)
+		assert.Len(t, keys, 1)
 	})
+
+	t.Run("DeleteKey", func(t *testing.T) {
+		note := keyImput{
+			UserAddress:   "user1",
+			Key:           []byte("key"),
+			EncryptedData: []byte("enc"),
+			IV:            []byte("iv"),
+		}
+		err := repo.AddKey(ctx, note)
+		assert.NoError(t, err)
+
+		userAddress := "user1"
+		keys, err := repo.GetKeysByUser(ctx, userAddress)
+		assert.NoError(t, err)
+		assert.Len(t, keys, 2)
+
+		err = repo.DeleteKey(ctx, keys[0].ID)
+		assert.NoError(t, err)
+
+		keys, err = repo.GetKeysByUser(ctx, userAddress)
+		assert.NoError(t, err)
+		assert.Len(t, keys, 1)
+
+	})
+
 	t.Run("GetKeysByUser_Error", func(t *testing.T) {
 		userAddress := "user2"
 		keys, err := repo.GetKeysByUser(ctx, userAddress)
-		if err != nil {
-			t.Errorf("expected no error, got %v", err)
-		}
-		if len(keys) != 0 {
-			t.Errorf("expected empty slice, got %v", keys)
-		}
+		assert.NoError(t, err)
+		assert.Len(t, keys, 0)
 	})
 
 }

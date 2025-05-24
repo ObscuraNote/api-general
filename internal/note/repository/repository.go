@@ -19,7 +19,7 @@ type (
 		IV            []byte
 	}
 	keyOutput struct {
-		ID            [16]byte
+		ID            string
 		Key           []byte
 		EncryptedData []byte
 		IV            []byte
@@ -66,7 +66,7 @@ func (r *Repository) GetKeysByUser(ctx context.Context, userAddress string) ([]k
 	var notes []keyOutput
 	for rows.Next() {
 		var note keyOutput
-		if err := rows.Scan(&note.Key, &note.EncryptedData, &note.IV); err != nil {
+		if err := rows.Scan(&note.ID, &note.Key, &note.EncryptedData, &note.IV); err != nil {
 			log.Println("Error scanning note")
 
 			return nil, err
@@ -75,6 +75,18 @@ func (r *Repository) GetKeysByUser(ctx context.Context, userAddress string) ([]k
 	}
 
 	return notes, nil
+}
+
+func (r *Repository) DeleteKey(ctx context.Context, id string) error {
+	_, err := r.statements.deleteKey.statement.
+		ExecContext(ctx, id)
+	if err != nil {
+		log.Println("Error deleting note")
+
+		return err
+	}
+
+	return nil
 }
 
 func (r *Repository) prepareStatements() (statements, error) {
@@ -86,6 +98,11 @@ func (r *Repository) prepareStatements() (statements, error) {
 	}
 
 	statementsList.getNotesByUser.statement, err = r.db.PrepareStatement(statementsList.getNotesByUser.query)
+	if err != nil {
+		return statements{}, err
+	}
+
+	statementsList.deleteKey.statement, err = r.db.PrepareStatement(statementsList.deleteKey.query)
 	if err != nil {
 		return statements{}, err
 	}

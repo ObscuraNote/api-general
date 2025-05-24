@@ -11,6 +11,7 @@ type statementsItem struct {
 type statements struct {
 	addNote        statementsItem
 	getNotesByUser statementsItem
+	deleteKey      statementsItem
 }
 
 var statementsList = statements{
@@ -23,8 +24,14 @@ var statementsList = statements{
 	getNotesByUser: statementsItem{
 		name: "getNotesByUser",
 		query: `
-      SELECT key, encrypted_data, iv
+      SELECT id, key, encrypted_data, iv
       FROM keys
       WHERE user_address = $1;`,
+	},
+	deleteKey: statementsItem{
+		name: "deleteKey",
+		query: `
+			DELETE FROM keys
+			WHERE id = $1;`,
 	},
 }
