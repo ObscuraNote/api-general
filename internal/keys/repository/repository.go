@@ -4,30 +4,21 @@ import (
 	"context"
 	"log"
 
+	"github.com/ObscuraNote/api-general/internal/keys/dto"
 	"github.com/philippe-berto/database/postgresdb"
 )
 
 type (
 	Repository struct {
+		ctx        context.Context
 		db         *postgresdb.Client
 		statements statements
 	}
-	keyImput struct {
-		UserAddress   string
-		Key           []byte
-		EncryptedData []byte
-		IV            []byte
-	}
-	keyOutput struct {
-		ID            string
-		Key           []byte
-		EncryptedData []byte
-		IV            []byte
-	}
 )
 
-func New(db *postgresdb.Client) *Repository {
+func New(ctx context.Context, db *postgresdb.Client) *Repository {
 	r := &Repository{
+		ctx:        ctx,
 		db:         db,
 		statements: statements{},
 	}
@@ -41,9 +32,9 @@ func New(db *postgresdb.Client) *Repository {
 	return r
 }
 
-func (r *Repository) AddKey(ctx context.Context, note keyImput) error {
-	_, err := r.statements.addNote.statement.
-		ExecContext(ctx, note.UserAddress, note.Key, note.EncryptedData, note.IV)
+func (r *Repository) AddKey(userId int64, note dto.KeyImput) error {
+	_, err := r.statements.addKey.statement.
+		ExecContext(r.ctx, userId, note.UserAddress, note.EncryptedKey, note.KeyIV, note.EncryptedData, note.DataIV)
 	if err != nil {
 		log.Println("Error adding note")
 
@@ -53,9 +44,9 @@ func (r *Repository) AddKey(ctx context.Context, note keyImput) error {
 	return nil
 }
 
-func (r *Repository) GetKeysByUser(ctx context.Context, userAddress string) ([]keyOutput, error) {
-	rows, err := r.statements.getNotesByUser.statement.
-		QueryContext(ctx, userAddress)
+func (r *Repository) GetKeysByUser(userId int64) ([]dto.KeyOutput, error) {
+	rows, err := r.statements.getKeysByUser.statement.
+		QueryContext(r.ctx, userId)
 	if err != nil {
 		log.Println("Error getting notes by user")
 
@@ -63,10 +54,10 @@ func (r *Repository) GetKeysByUser(ctx context.Context, userAddress string) ([]k
 	}
 	defer rows.Close()
 
-	var notes []keyOutput
+	var notes []dto.KeyOutput
 	for rows.Next() {
-		var note keyOutput
-		if err := rows.Scan(&note.ID, &note.Key, &note.EncryptedData, &note.IV); err != nil {
+		var note dto.KeyOutput
+		if err := rows.Scan(&note.ID, &note.EncryptedKey, &note.KeyIV, &note.EncryptedData, &note.DataIV); err != nil {
 			log.Println("Error scanning note")
 
 			return nil, err
@@ -77,9 +68,9 @@ func (r *Repository) GetKeysByUser(ctx context.Context, userAddress string) ([]k
 	return notes, nil
 }
 
-func (r *Repository) DeleteKey(ctx context.Context, id string) error {
+func (r *Repository) DeleteKey(id string) error {
 	_, err := r.statements.deleteKey.statement.
-		ExecContext(ctx, id)
+		ExecContext(r.ctx, id)
 	if err != nil {
 		log.Println("Error deleting note")
 
@@ -92,12 +83,12 @@ func (r *Repository) DeleteKey(ctx context.Context, id string) error {
 func (r *Repository) prepareStatements() (statements, error) {
 	var err error
 
-	statementsList.addNote.statement, err = r.db.PrepareStatement(statementsList.addNote.query)
+	statementsList.addKey.statement, err = r.db.PrepareStatement(statementsList.addKey.query)
 	if err != nil {
 		return statements{}, err
 	}
 
-	statementsList.getNotesByUser.statement, err = r.db.PrepareStatement(statementsList.getNotesByUser.query)
+	statementsList.getKeysByUser.statement, err = r.db.PrepareStatement(statementsList.getKeysByUser.query)
 	if err != nil {
 		return statements{}, err
 	}
