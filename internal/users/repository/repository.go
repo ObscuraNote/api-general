@@ -2,12 +2,20 @@ package repository
 
 import (
 	"context"
-	"log"
 
 	"github.com/philippe-berto/database/postgresdb"
 )
 
+var _ UsersRepository = (*Repository)(nil)
+
 type (
+	UsersRepository interface {
+		CreateUser(userAddress, password string) error
+		GetUserId(userAddress, password string) (int64, error)
+		CheckUserExists(userAddress, password string) (bool, error)
+		UpdatePassword(userId int64, password string) error
+		DeleteUser(userId int64) (bool, error)
+	}
 	Repository struct {
 		ctx        context.Context
 		db         *postgresdb.Client
@@ -35,7 +43,6 @@ func (r *Repository) CreateUser(userAddress, password string) error {
 	_, err := r.statements.createUser.statement.
 		ExecContext(r.ctx, userAddress, password)
 	if err != nil {
-		log.Println("Error creating user")
 		return err
 	}
 
@@ -47,7 +54,6 @@ func (r *Repository) GetUserId(userAddress, password string) (int64, error) {
 	err := r.statements.getUserId.statement.
 		QueryRowContext(r.ctx, userAddress, password).Scan(&id)
 	if err != nil {
-		log.Println("Error getting user id")
 		return 0, err
 	}
 
@@ -59,7 +65,6 @@ func (r *Repository) CheckUserExists(userAddress, password string) (bool, error)
 	err := r.statements.checkUserExists.statement.
 		QueryRowContext(r.ctx, userAddress, password).Scan(&exists)
 	if err != nil {
-		log.Println("Error checking if user exists")
 		return false, err
 	}
 
@@ -70,24 +75,21 @@ func (r *Repository) UpdatePassword(userId int64, password string) error {
 	_, err := r.statements.updatePassword.statement.
 		ExecContext(r.ctx, userId, password)
 	if err != nil {
-		log.Println("Error updating password")
 		return err
 	}
 
 	return nil
 }
 
-func (r *Repository) DeleteUser(userAddress string) (bool, error) {
+func (r *Repository) DeleteUser(userId int64) (bool, error) {
 	result, err := r.statements.deleteUser.statement.
-		ExecContext(r.ctx, userAddress)
+		ExecContext(r.ctx, userId)
 	if err != nil {
-		log.Println("Error deleting user")
 		return false, err
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Println("Error getting rows affected")
 		return false, err
 	}
 

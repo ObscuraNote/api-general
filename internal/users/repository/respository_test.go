@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package repository
 
 import (
@@ -163,8 +166,13 @@ func (suite *RepositoryTestSuite) TestDeleteUser() {
 	assert.NoError(suite.T(), err)
 	assert.True(suite.T(), exists)
 
+	// Get user ID for deletion
+	userId, err := suite.repo.GetUserId(testUserAddress, testPassword)
+	require.NoError(suite.T(), err)
+	assert.Greater(suite.T(), userId, int64(0))
+
 	// Delete user
-	deleted, err := suite.repo.DeleteUser(testUserAddress)
+	deleted, err := suite.repo.DeleteUser(userId)
 	assert.NoError(suite.T(), err)
 	assert.True(suite.T(), deleted) // Verify that a row was actually deleted
 
@@ -176,7 +184,8 @@ func (suite *RepositoryTestSuite) TestDeleteUser() {
 
 func (suite *RepositoryTestSuite) TestDeleteUser_NonExistent() {
 	// Try to delete non-existent user
-	deleted, err := suite.repo.DeleteUser(testUserAddress)
+	nonExistentUserId := int64(99999)
+	deleted, err := suite.repo.DeleteUser(nonExistentUserId)
 	assert.NoError(suite.T(), err)
 	assert.False(suite.T(), deleted) // Verify that no rows were affected
 }
@@ -209,7 +218,12 @@ func (suite *RepositoryTestSuite) TestMultipleUsers() {
 	}
 
 	// Delete one user
-	deleted, err := suite.repo.DeleteUser(users[1].address)
+	// Get user ID for deletion
+	userIdToDelete, err := suite.repo.GetUserId(users[1].address, users[1].password)
+	require.NoError(suite.T(), err)
+	assert.Greater(suite.T(), userIdToDelete, int64(0))
+
+	deleted, err := suite.repo.DeleteUser(userIdToDelete)
 	assert.NoError(suite.T(), err)
 	assert.True(suite.T(), deleted) // Verify that a row was actually deleted
 

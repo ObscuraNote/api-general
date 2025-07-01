@@ -51,6 +51,6 @@ var statementsList = statements{
 		name: "deleteUser",
 		query: `
             DELETE FROM users
-            WHERE user_address = $1;`,
+            WHERE id = $1;`,
 	},
 }

@@ -8,7 +8,14 @@ import (
 	"github.com/philippe-berto/database/postgresdb"
 )
 
+var _ KeysRepository = (*Repository)(nil)
+
 type (
+	KeysRepository interface {
+		AddKey(userId int64, note dto.KeyImput) error
+		GetKeysByUser(userId int64) ([]dto.KeyOutput, error)
+		DeleteKey(id string) error
+	}
 	Repository struct {
 		ctx        context.Context
 		db         *postgresdb.Client

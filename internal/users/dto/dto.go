@@ -1,4 +1,4 @@
-package model
+package dto
 
 type (
 	User struct {
@@ -9,5 +9,11 @@ type (
 	UserInput struct {
 		UserAddress string `json:"user_address" db:"user_address"`
 		Password    string `json:"password" db:"password"`
+	}
+
+	UpdatePasswordInput struct {
+		UserAddress string `json:"user_address" db:"user_address"`
+		Password    string `json:"password" db:"password"`
+		NewPassword string `json:"new_password" db:"new_password"`
 	}
 )
