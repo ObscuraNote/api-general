@@ -1,0 +1,55 @@
+@baseUrl = http://localhost:8080
+@devBaseUrl = http://44.243.77.246:8080
+@userAddress = 50dd529f45b7a22ba9132e11d4b01fe8d2182953f6ab789e59807e7d7221bd63
+@password = 0554a5df02ee12f1ae36a51caaef34a31deb9458a48b629da554a2b322466f4a
+@authToken = {{userAddress}}:{{password}}
+
+###
+POST {{baseUrl}}/users
+Content-Type: application/json
+Cache-Control: no-cache
+
+{
+  "user_address": "{{userAddress}}",
+  "password": "{{password}}"
+}
+
+###
+GET {{devBaseUrl}}/users/check
+Content-Type: application/json
+Cache-Control: no-cache
+Authorization: Bearer {{authToken}}
+
+###
+POST {{baseUrl}}/keys
+Content-Type: application/json
+Cache-Control: no-cache
+
+{
+  "user_address": "{{userAddress}}",
+  "password": "{{password}}",
+  "encrypted_key": "7rRH3RC36nZh3D2Q1fIWjBt42Arh",
+  "encrypted_data": "xZjpvW3BV8sSo5JuGTNxhpARfbO13Mt0Dw5/iMf4",
+  "key_iv": "8RwDVrRHF42p0hJQ",
+  "data_iv": "76f5i1pfRcllq0Tv"
+}
+// Expected Response (201 Created):
+// {
+//   "id": "uuid-generated-id",
+//   "encrypted_key": "7rRH3RC36nZh3D2Q1fIWjBt42Arh",
+//   "encrypted_data": "xZjpvW3BV8sSo5JuGTNxhpARfbO13Mt0Dw5/iMf4",
+//   "key_iv": "8RwDVrRHF42p0hJQ",
+//   "data_iv": "76f5i1pfRcllq0Tv",
+//   "created_at": "2025-07-02T17:42:26.123Z"
+// }
+
+###
+GET {{baseUrl}}/keys
+Cache-Control: no-cache
+Authorization: Bearer {{authToken}}
+
+###
+// Expected Response (204 No Content):
+DELETE {{baseUrl}}/keys/3fa146de-e36d-411d-bfb6-6a7a1bb1fd63
+Cache-Control: no-cache
+Authorization: Bearer {{authToken}}

@@ -19,12 +19,13 @@ var statementsList = statements{
 		name: "addKey",
 		query: `
 			INSERT INTO keys (user_id, user_address, encrypted_key, key_iv, encrypted_data, data_iv)
-        VALUES ($1, $2, $3, $4, $5, $6);`,
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, encrypted_key, key_iv, encrypted_data, data_iv, created_at;`,
 	},
 	getKeysByUser: statementsItem{
 		name: "getKeysByUser",
 		query: `
-      SELECT id, encrypted_key, key_iv, encrypted_data, data_iv
+      SELECT id, encrypted_key, key_iv, encrypted_data, data_iv, created_at
       FROM keys
       WHERE user_id = $1
 			ORDER BY created_at DESC;`,

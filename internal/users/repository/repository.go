@@ -23,7 +23,7 @@ type (
 	}
 )
 
-func New(ctx context.Context, db *postgresdb.Client) *Repository {
+func New(ctx context.Context, db *postgresdb.Client) (*Repository, error) {
 	r := &Repository{
 		ctx:        ctx,
 		db:         db,
@@ -31,12 +31,12 @@ func New(ctx context.Context, db *postgresdb.Client) *Repository {
 	}
 	statements, err := r.prepareStatements()
 	if err != nil {
-		panic(err)
+		return &Repository{}, err
 	}
 
 	r.statements = statements
 
-	return r
+	return r, nil
 }
 
 func (r *Repository) CreateUser(userAddress, password string) error {

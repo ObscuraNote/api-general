@@ -19,6 +19,7 @@ type (
 		EncryptedData []byte `json:"encrypted_data" db:"encrypted_data"`
 		KeyIV         []byte `json:"key_iv" db:"key_iv"`
 		DataIV        []byte `json:"data_iv" db:"data_iv"`
+		CreatedAt     string `json:"created_at" db:"created_at"`
 	}
 	DeleteKeyInput struct {
 		ID          string `json:"id" db:"id"`

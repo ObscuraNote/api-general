@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/ObscuraNote/api-general/internal/users/dto"
 	"github.com/ObscuraNote/api-general/internal/users/service"
@@ -125,12 +126,15 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCredentials(r *http.Request) (string, string) {
-	userAddress := r.Header.Get("User-Address")
-	password := r.Header.Get("Password")
+	authHeader := r.Header.Get("Authorization")
+	if strings.HasPrefix(authHeader, "Bearer ") {
+		credentials := strings.TrimPrefix(authHeader, "Bearer ")
+		parts := strings.Split(credentials, ":")
+		userAddress := parts[0]
+		password := parts[1]
 
-	if userAddress == "" || password == "" {
-		return "", ""
+		return userAddress, password
 	}
 
-	return userAddress, password
+	return "", ""
 }

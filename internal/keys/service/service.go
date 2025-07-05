@@ -15,9 +15,9 @@ var _ KeysService = (*Service)(nil)
 
 type (
 	KeysService interface {
-		AddKey(note dto.KeyImput) error
+		AddKey(note dto.KeyImput) (*dto.KeyOutput, error)
 		GetKeysByUser(ctx context.Context, auth dto.AuthInput) ([]dto.KeyOutput, error)
-		DeleteKey(input dto.DeleteKeyInput) error
+		DeleteKey(keyId string, auth dto.AuthInput) error
 	}
 
 	Service struct {
@@ -37,19 +37,19 @@ func New(ctx context.Context, log logger.Logger, repo r.KeysRepository, us u.Use
 	}
 }
 
-func (s *Service) AddKey(note dto.KeyImput) error {
+func (s *Service) AddKey(note dto.KeyImput) (*dto.KeyOutput, error) {
 	userId, err := s.getUserId(note.UserAddress, note.Password)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = s.r.AddKey(userId, note)
+	createdKey, err := s.r.AddKey(userId, note)
 	if err != nil {
-		s.log.WithFields(logger.Fields{"error": err.Error(), "component": "Note Service", "function": "AddKey"}).Error(utils.ErrDatabase)
-		return fmt.Errorf(utils.ErrDatabase)
+		s.log.WithFields(logger.Fields{"error": err.Error(), "component": "keys_service", "function": "AddKey"}).Error(utils.ErrDatabase)
+		return nil, fmt.Errorf(utils.ErrDatabase)
 	}
 
-	return nil
+	return createdKey, nil
 }
 
 func (s *Service) GetKeysByUser(ctx context.Context, auth dto.AuthInput) ([]dto.KeyOutput, error) {
@@ -59,23 +59,23 @@ func (s *Service) GetKeysByUser(ctx context.Context, auth dto.AuthInput) ([]dto.
 	}
 	keys, err := s.r.GetKeysByUser(userId)
 	if err != nil {
-		s.log.WithFields(logger.Fields{"error": err.Error(), "component": "Note Service", "function": "GetKeysByUser"}).Error(utils.ErrDatabase)
+		s.log.WithFields(logger.Fields{"error": err.Error(), "component": "keys_service", "function": "GetKeysByUser"}).Error(utils.ErrDatabase)
 		return nil, fmt.Errorf(utils.ErrDatabase)
 	}
 
 	return keys, nil
 }
 
-func (s *Service) DeleteKey(input dto.DeleteKeyInput) error {
-	exists, err := s.us.CheckUserExists(input.UserAddress, input.Password)
+func (s *Service) DeleteKey(keyId string, auth dto.AuthInput) error {
+	exists, err := s.us.CheckUserExists(auth.UserAddress, auth.Password)
 	if err != nil {
-		return err
+		return fmt.Errorf(utils.ErrUnauthorized)
 	}
 
 	if exists {
-		err = s.r.DeleteKey(input.ID)
+		err = s.r.DeleteKey(keyId)
 		if err != nil {
-			s.log.WithFields(logger.Fields{"error": err.Error(), "component": "Note Service", "function": "DeleteKey"}).Error(utils.ErrDatabase)
+			s.log.WithFields(logger.Fields{"error": err.Error(), "component": "keys_service", "function": "DeleteKey"}).Error(utils.ErrDatabase)
 			return fmt.Errorf(utils.ErrDatabase)
 		}
 	}
@@ -86,7 +86,7 @@ func (s *Service) DeleteKey(input dto.DeleteKeyInput) error {
 func (s *Service) getUserId(userAddress, password string) (int64, error) {
 	userId, err := s.us.GetUserId(userAddress, password)
 	if err != nil {
-		s.log.WithFields(logger.Fields{"error": err.Error(), "component": "Note Service", "function": "getUserId"}).Error(utils.ErrDatabase)
+		s.log.WithFields(logger.Fields{"error": err.Error(), "component": "keys_service", "function": "getUserId"}).Error(utils.ErrDatabase)
 		return 0, fmt.Errorf(utils.ErrDatabase)
 	}
 	if userId <= 0 {

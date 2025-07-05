@@ -1,0 +1,24 @@
+# Copy this file to terraform.tfvars and fill in your values
+
+# AWS Region - Choose based on your location and needs:
+# "us-west-2"      - Oregon (recommended: cheapest, newest features)
+# "us-east-1"      - N. Virginia (largest region, some services cheaper)
+# "us-west-1"      - N. California (US West Coast)
+# "eu-west-1"      - Ireland (Europe)
+# "eu-central-1"   - Frankfurt (Germany)
+# "ap-southeast-1" - Singapore (Asia-Pacific)
+# "ap-northeast-1" - Tokyo (Japan)
+aws_region = "us-west-2"
+
+# Project name (will be used as prefix for all resources)
+project_name = "cryple"
+
+# Your public SSH key content (generate with: ssh-keygen -t rsa -b 4096)
+# You can get the content with: cat ~/.ssh/id_rsa.pub
+public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADA... your-email@example.com"
+
+# Database password (choose a strong password)
+db_password = "your-secure-database-password"
+
+# AMI ID is auto-selected based on region - leave empty for automatic selection
+# ami_id = ""

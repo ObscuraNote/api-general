@@ -61,8 +61,15 @@ func TestRepository(t *testing.T) {
 			EncryptedData: []byte("enc"),
 			DataIV:        []byte("iv"),
 		}
-		err := repo.AddKey(userId, note)
+		createdKey, err := repo.AddKey(userId, note)
 		assert.NoError(t, err)
+		assert.NotNil(t, createdKey)
+		assert.NotEmpty(t, createdKey.ID)
+		assert.Equal(t, note.EncryptedKey, createdKey.EncryptedKey)
+		assert.Equal(t, note.KeyIV, createdKey.KeyIV)
+		assert.Equal(t, note.EncryptedData, createdKey.EncryptedData)
+		assert.Equal(t, note.DataIV, createdKey.DataIV)
+		assert.NotEmpty(t, createdKey.CreatedAt)
 	})
 
 	t.Run("GetKeysByUser", func(t *testing.T) {
@@ -79,8 +86,9 @@ func TestRepository(t *testing.T) {
 			EncryptedData: []byte("enc"),
 			DataIV:        []byte("iv"),
 		}
-		err := repo.AddKey(userId, note)
+		createdKey, err := repo.AddKey(userId, note)
 		assert.NoError(t, err)
+		assert.NotNil(t, createdKey)
 
 		keys, err := repo.GetKeysByUser(userId)
 		assert.NoError(t, err)

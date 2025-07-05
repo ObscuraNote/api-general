@@ -12,7 +12,7 @@ var _ KeysRepository = (*Repository)(nil)
 
 type (
 	KeysRepository interface {
-		AddKey(userId int64, note dto.KeyImput) error
+		AddKey(userId int64, note dto.KeyImput) (*dto.KeyOutput, error)
 		GetKeysByUser(userId int64) ([]dto.KeyOutput, error)
 		DeleteKey(id string) error
 	}
@@ -39,16 +39,18 @@ func New(ctx context.Context, db *postgresdb.Client) *Repository {
 	return r
 }
 
-func (r *Repository) AddKey(userId int64, note dto.KeyImput) error {
-	_, err := r.statements.addKey.statement.
-		ExecContext(r.ctx, userId, note.UserAddress, note.EncryptedKey, note.KeyIV, note.EncryptedData, note.DataIV)
+func (r *Repository) AddKey(userId int64, note dto.KeyImput) (*dto.KeyOutput, error) {
+	var result dto.KeyOutput
+	err := r.statements.addKey.statement.
+		QueryRowContext(r.ctx, userId, note.UserAddress, note.EncryptedKey, note.KeyIV, note.EncryptedData, note.DataIV).
+		Scan(&result.ID, &result.EncryptedKey, &result.KeyIV, &result.EncryptedData, &result.DataIV, &result.CreatedAt)
 	if err != nil {
 		log.Println("Error adding note")
 
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &result, nil
 }
 
 func (r *Repository) GetKeysByUser(userId int64) ([]dto.KeyOutput, error) {
@@ -64,7 +66,7 @@ func (r *Repository) GetKeysByUser(userId int64) ([]dto.KeyOutput, error) {
 	var notes []dto.KeyOutput
 	for rows.Next() {
 		var note dto.KeyOutput
-		if err := rows.Scan(&note.ID, &note.EncryptedKey, &note.KeyIV, &note.EncryptedData, &note.DataIV); err != nil {
+		if err := rows.Scan(&note.ID, &note.EncryptedKey, &note.KeyIV, &note.EncryptedData, &note.DataIV, &note.CreatedAt); err != nil {
 			log.Println("Error scanning note")
 
 			return nil, err
